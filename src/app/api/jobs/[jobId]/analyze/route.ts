@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { scoreAndRankResumes } from '@/lib/scorer';
 
+type AnalyzeCandidate = {
+  id: string;
+  resumeText: string;
+  experience: string | null;
+  education: string | null;
+};
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ jobId: string }> }
@@ -23,9 +30,11 @@ export async function POST(
       return NextResponse.json({ error: 'No candidates to analyze' }, { status: 400 });
     }
 
+    const candidates = job.candidates as AnalyzeCandidate[];
+
     // Score and rank all candidates
     const rankedResults = await scoreAndRankResumes(
-      job.candidates.map((c) => ({
+      candidates.map((c) => ({
         id: c.id,
         text: c.resumeText,
         experience: c.experience,
