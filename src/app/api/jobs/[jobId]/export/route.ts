@@ -2,6 +2,18 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import * as XLSX from 'xlsx';
 
+type ExportCandidate = {
+  name: string;
+  email: string | null;
+  phone: string | null;
+  resumeFileName: string;
+  matchScore: number;
+  rank: number;
+  skillsMatched: unknown;
+  skillsMissing: unknown;
+  education: string | null;
+};
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ jobId: string }> }
@@ -32,8 +44,10 @@ export async function GET(
       },
     });
 
+    const exportCandidates = candidates as ExportCandidate[];
+
     // Transform data for export
-    const exportData = candidates.map((c) => ({
+    const exportData = exportCandidates.map((c) => ({
       'Rank': c.rank,
       'Name': c.name,
       'Email': c.email || 'N/A',
