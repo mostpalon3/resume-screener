@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ResumeAI — Intelligent Resume Screening & Candidate Ranking
 
-## Getting Started
+An AI-powered web application that automates resume screening by comparing uploaded resumes against a Job Description, assigning a matching score (0–100), and ranking candidates from highest to lowest fit.
 
-First, run the development server:
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | Next.js 16 (App Router), React, Framer Motion, Vanilla CSS (Glassmorphism) |
+| **Backend** | Next.js API Routes, Node.js |
+| **Database** | PostgreSQL + Prisma 7 ORM |
+| **Resume Parsing** | `pdf-parse` (PDF), `officeparser` (DOC/DOCX) |
+| **Scoring Engine** | `natural` (TF-IDF + Cosine Similarity), custom keyword/skill matching |
+| **Export** | `xlsx` (SheetJS) for CSV and Excel |
+
+## Features
+
+- **Multi-format Resume Upload** — PDF, DOC, DOCX via drag & drop
+- **JD Input** — Paste text or upload a document
+- **AI Scoring** — Multi-factor scoring: keyword similarity (35%), skills match (30%), experience relevance (20%), education alignment (15%)
+- **Dashboard** — Ranked candidates table with scores, search, sort, and export
+- **Candidate Detail** — Score breakdown, matched vs missing skills, full resume preview
+
+---
+
+## Setup Instructions
+
+### Prerequisites
+
+- **Node.js** 18+ installed
+- **PostgreSQL** installed and running locally (or a remote connection string)
+
+### Step 1: Install PostgreSQL (if not already installed)
+
+**macOS (via Homebrew):**
+```bash
+brew install postgresql@17
+brew services start postgresql@17
+```
+
+After PostgreSQL is running, create the database:
+```bash
+createdb resume_screener
+```
+
+> **Note:** If `createdb` is not found, you may need to add PostgreSQL to your PATH:
+> ```bash
+> echo 'export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"' >> ~/.zshrc
+> source ~/.zshrc
+> ```
+
+### Step 2: Configure the Database Connection
+
+Edit the `.env` file in the project root and set your PostgreSQL connection string:
+
+```env
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/resume_screener"
+```
+
+Adjust `postgres:postgres` to match your PostgreSQL username and password. On macOS Homebrew installs, you can often use your system username with no password:
+
+```env
+DATABASE_URL="postgresql://yourusername@localhost:5432/resume_screener"
+```
+
+### Step 3: Install Dependencies
+
+```bash
+npm install
+```
+
+### Step 4: Generate Prisma Client & Run Migrations
+
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+```
+
+### Step 5: Start the Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Usage
 
-## Learn More
+1. Click **Start Screening** on the home page
+2. **Step 1:** Enter a job title and paste/upload the job description
+3. **Step 2:** Drag & drop one or more resumes (PDF, DOC, DOCX)
+4. **Step 3:** Review and click **Analyze Resumes**
+5. View the ranked results dashboard with scores, skills, and export options
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scoring Algorithm
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Factor | Weight | Method |
+|--------|--------|--------|
+| Keyword Similarity | 35% | TF-IDF vectorization + Cosine Similarity |
+| Skills Match | 30% | Taxonomy-based exact + alias matching (~150 skills) |
+| Experience Relevance | 20% | Section-specific cosine similarity |
+| Education Alignment | 15% | Degree level + field of study matching |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+resume-screener/
+├── prisma/
+│   └── schema.prisma          # Database schema
+├── prisma.config.ts            # Prisma 7 config
+├── src/
+│   ├── app/
+│   │   ├── globals.css         # Design system
+│   │   ├── layout.tsx          # Root layout
+│   │   ├── page.tsx            # Landing page
+│   │   ├── jobs/
+│   │   │   ├── new/page.tsx    # Job creation wizard
+│   │   │   └── [jobId]/
+│   │   │       ├── page.tsx    # Results dashboard
+│   │   │       └── candidates/[candidateId]/page.tsx
+│   │   └── api/jobs/           # API routes
+│   ├── components/             # Reusable UI components
+│   └── lib/
+│       ├── prisma.ts           # DB client
+│       ├── parser.ts           # Resume text extraction
+│       ├── extractor.ts        # Info extraction (name, email, skills)
+│       ├── scorer.ts           # Scoring engine
+│       └── skills-database.ts  # Skills taxonomy
+├── .env                        # Environment variables
+├── package.json
+└── README.md
+```
